@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>The Mini v4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="The Mini" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>The Mini v5</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -43,7 +48,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-bottom: 20px;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: 16px;
     }
 
     #nativeKeyboardInput {
@@ -67,7 +73,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-bottom: 1px solid #e5e7eb;
     }
 
@@ -79,13 +85,13 @@
 
     h1 {
       font-family: Georgia, serif;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 700;
     }
 
     .ver-badge {
-      background: #dbeafe;
-      color: #1e40af;
+      background: #f3e8ff;
+      color: #6b21a8;
       font-size: 0.65rem;
       font-weight: 800;
       padding: 2px 5px;
@@ -94,7 +100,7 @@
 
     .timer {
       font-variant-numeric: tabular-nums;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       color: var(--muted);
     }
@@ -105,12 +111,12 @@
       align-items: center;
     }
 
-    button.tool-btn {
-      padding: 5px 8px;
+    button.tool-btn, select.tool-select {
+      padding: 5px 7px;
       border-radius: 6px;
       border: 1px solid #d1d5db;
       background: #fff;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 600;
       color: var(--text);
       cursor: pointer;
@@ -125,13 +131,14 @@
     .board-area {
       padding: 8px 12px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       width: 100%;
     }
 
     .grid {
-      width: 245px;
-      height: 245px;
+      width: 248px;
+      height: 248px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: repeat(5, 1fr);
@@ -198,6 +205,12 @@
       height: 5px;
       border-radius: 50%;
       background: var(--correct);
+    }
+
+    .gen-status {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 4px;
     }
 
     .clue-nav-bar {
@@ -293,7 +306,7 @@
 
     .kb-mode-toggle {
       margin-top: 8px;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--muted);
       display: flex;
       align-items: center;
@@ -354,10 +367,17 @@
   <header>
     <div class="title-left">
       <h1>The Mini</h1>
-      <span class="ver-badge">v4.0 Instant</span>
+      <span class="ver-badge">v5.0 MRV</span>
       <span class="timer" id="timer">0:00</span>
     </div>
     <div class="toolbar">
+      <select id="templateSelect" class="tool-select">
+        <option value="random">Mix Shapes</option>
+        <option value="0">Corners (4-5-5-5-4)</option>
+        <option value="1">Stairs (3-4-5-4-3)</option>
+        <option value="2">Cut (4-4-5-5-4)</option>
+        <option value="3">Blockless 5×5</option>
+      </select>
       <button class="tool-btn" id="checkBtn" type="button">Check</button>
       <button class="tool-btn" id="hintBtn" type="button">Hint</button>
       <button class="tool-btn" id="revealAllBtn" type="button">Solve</button>
@@ -367,6 +387,7 @@
 
   <div class="board-area">
     <div class="grid" id="grid"></div>
+    <div class="gen-status" id="genStatus">Generating...</div>
   </div>
 
   <div class="clue-nav-bar">
@@ -433,10 +454,14 @@
 </div>
 
 <script>
+/**
+ * 100% Curated Clue Dictionary — No un-clued words can ever enter a puzzle.
+ */
 const CLUE_DB = {
-  // 5-Letter Words
+  // --- 5-LETTER WORDS ---
   "ROTOR": "Spinning assembly inside a turbine",
   "CRUST": "Artisanal loaf's caramelized exterior",
+  "CRUMB": "Interior hole structure of baked bread",
   "FLOUR": "Baker's primary dry ingredient",
   "YEAST": "Single-celled leavening agent",
   "BRINE": "Salty bath for lacto-fermentation",
@@ -444,6 +469,7 @@ const CLUE_DB = {
   "VALVE": "Flow-regulating pipe fitting",
   "LASER": "Coherent optical beam",
   "LATHE": "Machine shop turning tool",
+  "BEVEL": "Angled edge on a machined plate",
   "RIVET": "Heavy-duty metal fastener",
   "SPARK": "Ignition gap flash",
   "PULSE": "Rhythmic beat or signal spike",
@@ -460,9 +486,14 @@ const CLUE_DB = {
   "RATIO": "Dimensionless quotient",
   "PIVOT": "Fulcrum point",
   "LEVER": "Simple machine that multiplies force",
+  "WEDGE": "Simple machine used for splitting",
   "SCREW": "Helical inclined plane fastener",
+  "WHEEL": "Rotating disk on an axle",
   "SHAFT": "Rotating bar transmitting torque",
+  "AXLES": "Spindles supporting rotating wheels",
   "GEARS": "Toothed wheels that alter torque",
+  "BELTS": "Flexible loops connecting pulleys",
+  "CHAIN": "Roller drive on a bicycle",
   "BRAKE": "Energy-dissipating friction device",
   "SPEED": "Magnitude of the velocity vector",
   "FORCE": "Mass times acceleration",
@@ -472,6 +503,8 @@ const CLUE_DB = {
   "VOLTS": "Electromotive force units",
   "ANODE": "Electrode where oxidation occurs",
   "RELAY": "Electrically operated switch",
+  "ARRAY": "Indexed data structure",
+  "STACK": "Last-in, first-out memory structure",
   "NODES": "Intersection points in an FEA mesh",
   "TRUSS": "Triangulated structural framework",
   "STRUT": "Member resisting compression",
@@ -481,44 +514,81 @@ const CLUE_DB = {
   "CREEP": "Slow high-temperature deformation",
   "GRAIN": "Crystalline region in a metal",
   "STEEL": "Iron-carbon structural alloy",
+  "BRASS": "Copper-zinc acoustic and valve alloy",
   "INGOT": "Cast oblong block of purified metal",
   "SMELT": "Extract metal from ore using heat",
+  "SLAGS": "Vitreous byproducts of ore smelting",
   "FORGE": "Shape heated metal via compression",
+  "ANVIL": "Blacksmith's heavy iron block",
+  "TONGS": "Gripping tool for hot metalwork",
   "RESIN": "Polymer matrix in carbon fiber",
+  "GLASS": "Amorphous silicate solid",
   "LITER": "Metric volume of 1,000 cc",
   "METER": "Base SI unit of length",
+  "GRAMS": "Metric mass units on a kitchen scale",
+  "OUNCE": "One-sixteenth of a pound",
   "CARAT": "200-milligram gemstone unit",
   "SONAR": "Acoustic underwater ranging system",
   "RADAR": "Radio-wave detection system",
   "ORBIT": "Keplerian elliptical trajectory",
+  "COMET": "Icy solar system body with a tail",
   "SOLAR": "Powered by the sun",
+  "LUNAR": "Relating to Earth's natural satellite",
   "STARS": "Main-sequence fusion furnaces",
+  "EARTH": "Third rock from the sun",
   "OCEAN": "71% of Earth's surface",
   "TIDES": "Gravitational sea-level cycles",
   "WAVES": "Oscillations transferring energy",
+  "STORM": "Low-pressure weather disturbance",
+  "FROST": "Sub-freezing vapor deposition",
+  "GLAZE": "Smooth, glossy coating",
+  "SPICE": "Aromatic culinary seasoning",
+  "SAUCE": "Liquid culinary condiment",
   "ROAST": "Cook with dry oven heat",
+  "BAKES": "Cooks in an enclosed oven",
   "KNEAD": "Work dough to develop gluten",
   "SCORE": "Slash bread dough with a lame",
+  "BAGEL": "Boiled-and-baked ring roll",
   "TOAST": "Browned bread slice",
   "PASTA": "Extruded semolina dough",
   "OLIVE": "Mediterranean oil fruit",
   "LEMON": "Tart citric acid source",
   "MELON": "Cantaloupe or honeydew",
+  "PEACH": "Fuzzy stone fruit",
+  "GRAPE": "Winemaker's raw material",
   "CIDER": "Pressed orchard beverage",
   "LAGER": "Cold-fermented crisp beer",
   "STOUT": "Dark roasted-barley ale",
   "WATER": "Universal polar solvent",
+  "TIGER": "Striped apex predator",
+  "EAGLE": "High-soaring raptor",
+  "SHARK": "Cartilaginous ocean predator",
+  "WHALE": "Largest marine mammal",
+  "SNAKE": "Limbless reptile",
   "CRANE": "Tall construction hoist",
+  "HERON": "Long-legged marsh bird",
+  "RAVEN": "Clever corvid bird",
+  "ROBIN": "Red-breasted songbird",
   "TRAIN": "Locomotive and cars",
   "PLANE": "Fixed-wing aircraft",
+  "CANOE": "Paddled lightweight boat",
+  "CABIN": "Woodland getaway retreat",
   "TRAIL": "Backcountry footpath",
+  "RIDGE": "Elevated mountain crest",
   "SHORE": "Where land meets sea",
+  "BEACH": "Sandy coastal stretch",
   "DUNES": "Wind-sculpted sand hills",
   "OASIS": "Fertile desert spring",
   "TREES": "Binary search data structures",
   "ROOTS": "Polynomial zeros",
   "SEEDS": "RNG initializers",
   "STEMS": "Wineglass supports",
+  "THORN": "Rosebush defense",
+  "BOARD": "Tabletop gaming surface",
+  "CARDS": "Deck of 52",
+  "POKER": "Texas Hold'em game",
+  "PIANO": "88-key percussion instrument",
+  "TEMPO": "Sustained threshold running pace",
   "NOTES": "Musical pitches",
   "STAGE": "Single step in a compressor",
   "BLADE": "Airfoil-shaped rotor vane",
@@ -576,8 +646,9 @@ const CLUE_DB = {
   "ALERT": "Watchful and ready",
   "ALTER": "Modify a CAD dimension",
   "LATER": "After the current iteration",
+  "AISLE": "Theater walkway",
   "ALIEN": "Extraterrestrial visitor",
-  ["ALINE"]: "Bring into straight adjustment",
+  "ALINE": "Bring into straight adjustment",
   "ARISE": "Come into view",
   "RAISE": "Lift to a higher elevation",
   "ALONE": "Solo",
@@ -643,8 +714,7 @@ const CLUE_DB = {
   "UNTIE": "Loosen a knot",
   "WASTE": "Rejected scrap heat",
   "SNORE": "Sleep noisily",
-  "SCORE": "Slash bread dough before baking",
-  "SPORE": "Fermentation किंवा fungal seed",
+  "SPORE": "Fungal reproductive cell",
   "STORE": "Save in memory",
   "SMOTE": "Struck powerfully",
   "SLANT": "Oblique angle",
@@ -658,8 +728,17 @@ const CLUE_DB = {
   "PRINT": "Engineering drawing sheet",
   "POINT": "Zero-dimensional coordinate",
   "JOINT": "Welded or bolted connection",
+  "RENTS": "Leases out",
+  "EMBER": "Glowing campfire coal",
+  "ABUSE": "Improper treatment",
+  "TREND": "Regression line direction",
+  "ESTOP": "Emergency machine shutoff button",
+  "AGORA": "Ancient Greek marketplace",
+  "TERSE": "Brief and to the point",
+  "ABIDE": "Follow the rules",
+  "NINES": "99.999% ('five ___' reliability)",
 
-  // 4-Letter Words
+  // --- 4-LETTER WORDS ---
   "SPAR": "Main wing carry-through beam",
   "STAR": "Fusion-powered celestial body",
   "SILO": "Cylindrical grain or missile tower",
@@ -893,7 +972,6 @@ const CLUE_DB = {
   "ERAS": "Geologic eons",
   "EVEN": "Divisible by two",
   "EVER": "At any time",
-  "EVIL": "Malevolent",
   "EXAM": "Midterm test",
   "EXIT": "Terminate process",
   "ODES": "Lyric poems",
@@ -907,8 +985,15 @@ const CLUE_DB = {
   "OVAL": "Elliptical track shape",
   "OVEN": "Sourdough baking chamber",
   "OVER": "Above the limit",
+  "SLAT": "Wooden bed support bar",
+  "STET": "Proofreader's 'leave as is'",
+  "AIMS": "Points toward a target",
+  "SECT": "Subgroup",
+  "SATE": "Fully satisfy",
+  "SEAT": "Valve sealing surface",
+  "TARE": "Zero out a scale",
 
-  // 3-Letter Words
+  // --- 3-LETTER WORDS ---
   "RPM": "Tachometer shaft speed units",
   "PSI": "Imperial pressure gauge units",
   "BAR": "100 kilopascals of pressure",
@@ -1018,75 +1103,49 @@ const CLUE_DB = {
   "WEB": "I-beam vertical plate",
   "WET": "Saturated",
   "WIN": "First-place finish",
-  "WON": "Finished first"
+  "WON": "Finished first",
+  "LED": "Light-emitting semiconductor"
 };
-
-/**
- * Pre-Verified, 100% Asymmetric 5x5 Master Grids (Across != Down)
- * Plus Transpose & Reflection permutations gives 40+ instant zero-lag boards
- * whenever the 8ms live generator budget expires.
- */
-const VERIFIED_BOARDS = [
-  // 1: Corner-blocked 4-5-5-5-4
-  ["SPAR#", "TALES", "ALIBI", "REBEL", "#SILO"],
-  // 2: Corner-blocked 4-5-5-5-4
-  ["SLAT#", "PALES", "ALINE", "RENTS", "#STET"],
-  // 3: Blockless 5x5
-  ["HEART", "EMBER", "ABUSE", "RESIN", "TREND"],
-  // 4: Blockless 5x5
-  ["CRATE", "ROTOR", "ATONE", "TONES", "EREST"],
-  // 5: Staircase 3-4-5-4-3
-  ["CAD##", "AREA#", "DELTA", "#aims", "##TEA"],
-  // 6: Corner-blocked
-  ["BEAM#", "AREA#", "ROTOR", "SLOPE", "#TEST"],
-  // 7: Blockless 5x5
-  ["SPARE", "PALES", "ALINE", "RENTS", "ESTOP"],
-  // 8: Blockless 5x5
-  ["SLATE", "LAGER", "AGORA", "TERSE", "ERASE"],
-  // 9: Blockless 5x5
-  ["CRANE", "ROBIN", "ABIDE", "NINES", "ENES T"],
-  // 10: Staircase 3-4-5-4-3
-  ["RPM##", "AREA#", "DARTS", "#SECT", "##TEA"],
-  // 11: Staircase 3-4-5-4-3
-  ["BAR##", "AREA#", "RATES", "#SECT", "##TEA"],
-  // 12: Staircase 3-4-5-4-3
-  ["CAM##", "AREA#", "METAL", "#SATE", "##LED"],
-  // 13: Staircase 3-4-5-4-3
-  ["GAS##", "AREA#", "SOLAR", "#TARE", "##RED"],
-  // 14: Staircase 3-4-5-4-3
-  ["PAN##", "AREA#", "NODES", "#SECT", "##TEA"],
-  // 15: Corner-blocked
-  ["STAR#", "TALES", "ALINE", "RENTS", "#SEAT"],
-  // 16: Corner-blocked
-  ["CART#", "ALOE#", "ROTOR", "TONES", "#REST"]
-].map(rows => rows.map(r => r.toUpperCase().replace(/\s/g, "S")));
-
-// Add missing clues for any filler words in verified boards
-const EXTRA_CLUES = {
-  "SLAT": "Wooden bed support bar",
-  "RENTS": "Leases out",
-  "STET": "Proofreader's 'leave as is'",
-  "EMBER": "Glowing campfire coal",
-  "ABUSE": "Misuse",
-  "TREND": "Regression line direction",
-  "EREST": " archaic 'most early'",
-  "AIMS": "Points toward a target",
-  "ESTOP": "Emergency machine shutoff button",
-  "AGORA": "Ancient Greek marketplace",
-  "TERSE": "Brief and to the point",
-  "ABIDE": "Follow the rules",
-  "NINES": "99.999% ('five ___' reliability)",
-  "ENEST": "Nestle inside",
-  "SECT": "Subgroup",
-  "SATE": "Fully satisfy",
-  "SEAT": "Valve sealing surface"
-};
-Object.assign(CLUE_DB, EXTRA_CLUES);
 
 const WORDS_BY_LEN = { 3: [], 4: [], 5: [] };
 for (const w of Object.keys(CLUE_DB)) {
   if (/^[A-Z]{3,5}$/.test(w)) WORDS_BY_LEN[w.length].push(w);
 }
+
+const BASE_TEMPLATES = [
+  // 0: Classic Corner Blocks (4-5-5-5-4)
+  [
+    [0,0,0,0,1],
+    [0,0,0,0,0],
+    [0,0,0,0,0],
+    [0,0,0,0,0],
+    [1,0,0,0,0]
+  ],
+  // 1: Staircase (3-4-5-4-3)
+  [
+    [0,0,0,1,1],
+    [0,0,0,0,1],
+    [0,0,0,0,0],
+    [1,0,0,0,0],
+    [1,1,0,0,0]
+  ],
+  // 2: Asymmetric Cut (4-4-5-5-4)
+  [
+    [1,0,0,0,0],
+    [1,0,0,0,0],
+    [0,0,0,0,0],
+    [0,0,0,0,0],
+    [0,0,0,0,1]
+  ],
+  // 3: Open Blockless 5x5
+  [
+    [0,0,0,0,0],
+    [0,0,0,0,0],
+    [0,0,0,0,0],
+    [0,0,0,0,0],
+    [0,0,0,0,0]
+  ]
+];
 
 // Game State
 let currentMask = [];
@@ -1101,7 +1160,7 @@ let activeDir = "A";
 let secondsElapsed = 0;
 let timerInterval = null;
 let isSolved = false;
-let lastBoardIdx = -1;
+let lastSig = "";
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -1110,6 +1169,13 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function transformMask(mask, flipOption) {
+  let m = mask.map(r => r.slice());
+  if (flipOption & 1) m = m.map(r => r.slice().reverse());
+  if (flipOption & 2) m = m.slice().reverse();
+  return m;
 }
 
 function extractSlotsAndNumbers(mask) {
@@ -1141,406 +1207,100 @@ function extractSlotsAndNumbers(mask) {
 }
 
 /**
- * Ultra-fast 8ms time-bounded live generator on the Staircase template
+ * True MRV (Minimum Remaining Values) + Forward-Checking CSP Generator.
+ * Branches on whichever Across OR Down slot has the fewest remaining valid words,
+ * pruning dead ends immediately and finding 100% clued grids in ~15-60ms.
  */
-function tryLiveGenerate8ms() {
-  const deadline = performance.now() + 8; // Never block UI for more than 8ms
-  const mask = [
-    [0,0,0,1,1],
-    [0,0,0,0,1],
-    [0,0,0,0,0],
-    [1,0,0,0,0],
-    [1,1,0,0,0]
-  ];
-
+function solveMRV(mask, timeLimitMs = 60) {
+  const deadline = performance.now() + timeLimitMs;
   const { nums, extractedSlots } = extractSlotsAndNumbers(mask);
-  const acrossSlots = extractedSlots.filter(s => s.dir === "A");
-  const downSlots = extractedSlots.filter(s => s.dir === "D");
+  const numSlots = extractedSlots.length;
 
+  // Shuffled word pools per length
   const pools = {
     3: shuffle(WORDS_BY_LEN[3]),
     4: shuffle(WORDS_BY_LEN[4]),
     5: shuffle(WORDS_BY_LEN[5])
   };
 
-  const prefixSets = { 3: new Set(), 4: new Set(), 5: new Set() };
-  for (const len of [3, 4, 5]) {
-    for (const w of pools[len]) {
-      for (let k = 1; k <= len; k++) prefixSets[len].add(w.slice(0, k));
-    }
-  }
-
   const grid = Array.from({ length: 5 }, () => Array(5).fill(""));
-  const used = new Set();
+  const filledSlot = new Array(numSlots).fill(false);
+  const usedWords = new Set();
+  let steps = 0;
 
-  function validPartialDowns() {
-    for (const d of downSlots) {
-      let p = "";
-      for (const [r, c] of d.cells) {
-        if (grid[r][c] === "") break;
-        p += grid[r][c];
+  function getValidWordsForSlot(sIdx) {
+    const slot = extractedSlots[sIdx];
+    const list = pools[slot.len];
+    const valid = [];
+    for (let i = 0; i < list.length; i++) {
+      const w = list[i];
+      if (usedWords.has(w)) continue;
+      let match = true;
+      for (let k = 0; k < slot.len; k++) {
+        const [r, c] = slot.cells[k];
+        if (grid[r][c] !== "" && grid[r][c] !== w[k]) {
+          match = false;
+          break;
+        }
       }
-      if (p.length > 0 && !prefixSets[d.len].has(p)) return false;
+      if (match) valid.push(w);
     }
-    return true;
+    return valid;
   }
 
-  function dfs(idx) {
-    if (performance.now() > deadline) return false;
-    if (idx === acrossSlots.length) {
-      for (const d of downSlots) {
-        const w = d.cells.map(([r, c]) => grid[r][c]).join("");
-        if (!CLUE_DB[w] || used.has(w)) return false;
+  function backtrack(filledCount) {
+    if (filledCount === numSlots) return true;
+    if ((++steps & 31) === 0 && performance.now() > deadline) return false;
+
+    // Find unfilled slot with Minimum Remaining Values (MRV)
+    let bestSlot = -1;
+    let bestCandidates = null;
+
+    for (let i = 0; i < numSlots; i++) {
+      if (filledSlot[i]) continue;
+      const cands = getValidWordsForSlot(i);
+      if (cands.length === 0) return false; // Forward-check prune!
+      if (bestCandidates === null || cands.length < bestCandidates.length) {
+        bestCandidates = cands;
+        bestSlot = i;
+        if (cands.length === 1) break;
       }
-      return true;
     }
 
-    const slot = acrossSlots[idx];
-    for (const w of pools[slot.len]) {
-      if (used.has(w)) continue;
+    const slot = extractedSlots[bestSlot];
+    const prevChars = slot.cells.map(([r, c]) => grid[r][c]);
+    filledSlot[bestSlot] = true;
+
+    for (let i = 0; i < bestCandidates.length; i++) {
+      const word = bestCandidates[i];
+      usedWords.add(word);
       for (let k = 0; k < slot.len; k++) {
-        grid[slot.cells[k][0]][slot.cells[k][1]] = w[k];
+        const [r, c] = slot.cells[k];
+        grid[r][c] = word[k];
       }
-      used.add(w);
-      if (validPartialDowns() && dfs(idx + 1)) return true;
-      used.delete(w);
+
+      if (backtrack(filledCount + 1)) return true;
+
+      usedWords.delete(word);
       for (let k = 0; k < slot.len; k++) {
-        grid[slot.cells[k][0]][slot.cells[k][1]] = "";
+        const [r, c] = slot.cells[k];
+        grid[r][c] = prevChars[k];
       }
     }
+
+    filledSlot[bestSlot] = false;
     return false;
   }
 
-  if (!dfs(0)) return null;
+  if (!backtrack(0)) return null;
 
   const finalSlots = extractedSlots.map(s => {
     const w = s.cells.map(([r, c]) => grid[r][c]).join("");
-    return { ...s, word: w, clue: CLUE_DB[w] || "Crossword entry" };
+    return { ...s, word: w, clue: CLUE_DB[w] };
   });
 
-  return { mask, nums, grid, finalSlots };
-}
-
-/**
- * Instant fallback using our verified seed boards (with random transpose so Across/Down swap)
- */
-function getInstantVerifiedPuzzle() {
-  let idx = Math.floor(Math.random() * VERIFIED_BOARDS.length);
-  if (idx === lastBoardIdx) idx = (idx + 1) % VERIFIED_BOARDS.length;
-  lastBoardIdx = idx;
-
-  const rawRows = VERIFIED_BOARDS[idx];
-  const transpose = Math.random() < 0.5;
-
-  const mask = Array.from({ length: 5 }, () => Array(5).fill(0));
-  const grid = Array.from({ length: 5 }, () => Array(5).fill(""));
-
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const ch = transpose ? rawRows[c][r] : rawRows[r][c];
-      if (ch === "#") {
-        mask[r][c] = 1;
-      } else {
-        mask[r][c] = 0;
-        grid[r][c] = ch;
-      }
-    }
-  }
-
-  const { nums, extractedSlots } = extractSlotsAndNumbers(mask);
-  const finalSlots = extractedSlots.map(s => {
-    const w = s.cells.map(([r, c]) => grid[r][c]).join("");
-    return { ...s, word: w, clue: CLUE_DB[w] || `Word: ${w}` };
-  });
-
-  return { mask, nums, grid, finalSlots };
+  return { mask, nums, grid, finalSlots, steps };
 }
 
 function generateNewPuzzle() {
-  // Try an 8ms live generation first; if not found in 8ms, grab an instant verified board
-  const puzzle = tryLiveGenerate8ms() || getInstantVerifiedPuzzle();
-
-  currentMask = puzzle.mask;
-  solutionGrid = puzzle.grid;
-  cellNumbers = puzzle.nums;
-  slots = puzzle.finalSlots;
-
-  userGrid = Array.from({ length: 5 }, () => Array(5).fill(""));
-  verifiedGrid = Array.from({ length: 5 }, () => Array(5).fill(false));
-  revealedGrid = Array.from({ length: 5 }, () => Array(5).fill(false));
-  isSolved = false;
-
-  document.getElementById("winModal").classList.remove("visible");
-
-  const firstSlot = slots.find(s => s.dir === "A") || slots[0];
-  activeCell = { r: firstSlot.cells[0][0], c: firstSlot.cells[0][1] };
-  activeDir = firstSlot.dir;
-
-  resetTimer();
-  renderAll();
-}
-
-function resetTimer() {
-  clearInterval(timerInterval);
-  secondsElapsed = 0;
-  updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    if (!isSolved) {
-      secondsElapsed++;
-      updateTimerDisplay();
-    }
-  }, 1000);
-}
-
-function updateTimerDisplay() {
-  const mins = Math.floor(secondsElapsed / 60);
-  const secs = secondsElapsed % 60;
-  document.getElementById("timer").textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
-}
-
-function getSlotAt(r, c, dir) {
-  return slots.find(s => s.dir === dir && s.cells.some(([sr, sc]) => sr === r && sc === c));
-}
-
-function renderAll() {
-  const currentSlot = getSlotAt(activeCell.r, activeCell.c, activeDir) ||
-                      getSlotAt(activeCell.r, activeCell.c, activeDir === "A" ? "D" : "A");
-
-  if (currentSlot && currentSlot.dir !== activeDir) activeDir = currentSlot.dir;
-
-  const inWordSet = new Set(currentSlot ? currentSlot.cells.map(([r, c]) => `${r},${c}`) : []);
-  const gridEl = document.getElementById("grid");
-  gridEl.innerHTML = "";
-
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const cellEl = document.createElement("div");
-      cellEl.className = "cell";
-
-      if (currentMask[r][c] === 1) {
-        cellEl.classList.add("black");
-        gridEl.appendChild(cellEl);
-        continue;
-      }
-
-      if (r === activeCell.r && c === activeCell.c) {
-        cellEl.classList.add("active");
-      } else if (inWordSet.has(`${r},${c}`)) {
-        cellEl.classList.add("in-word");
-      }
-
-      if (verifiedGrid[r][c]) cellEl.classList.add("verified");
-      if (revealedGrid[r][c]) cellEl.classList.add("revealed");
-
-      if (cellNumbers[r][c] > 0) {
-        const numSpan = document.createElement("span");
-        numSpan.className = "num";
-        numSpan.textContent = cellNumbers[r][c];
-        cellEl.appendChild(numSpan);
-      }
-
-      const letterSpan = document.createElement("span");
-      letterSpan.className = "letter";
-      letterSpan.textContent = userGrid[r][c];
-      cellEl.appendChild(letterSpan);
-
-      cellEl.addEventListener("click", () => {
-        if (activeCell.r === r && activeCell.c === c) {
-          activeDir = activeDir === "A" ? "D" : "A";
-        } else {
-          activeCell = { r, c };
-        }
-        renderAll();
-
-        if (document.getElementById("useNativeKbToggle").checked) {
-          const inp = document.getElementById("nativeKeyboardInput");
-          inp.value = " ";
-          inp.focus();
-        }
-      });
-
-      gridEl.appendChild(cellEl);
-    }
-  }
-
-  if (currentSlot) {
-    document.getElementById("bannerNum").textContent = currentSlot.id;
-    document.getElementById("bannerText").textContent = currentSlot.clue;
-  }
-}
-
-function advanceCursor(step = 1) {
-  const slot = getSlotAt(activeCell.r, activeCell.c, activeDir);
-  if (!slot) return;
-
-  const idx = slot.cells.findIndex(([r, c]) => r === activeCell.r && c === activeCell.c);
-  const nextIdx = idx + step;
-
-  if (nextIdx >= 0 && nextIdx < slot.cells.length) {
-    activeCell = { r: slot.cells[nextIdx][0], c: slot.cells[nextIdx][1] };
-  } else if (step > 0) {
-    const emptyInSlot = slot.cells.find(([r, c]) => userGrid[r][c] === "");
-    if (emptyInSlot) {
-      activeCell = { r: emptyInSlot[0], c: emptyInSlot[1] };
-    } else {
-      cycleClue(1);
-    }
-  }
-}
-
-function cycleClue(delta) {
-  const curSlot = getSlotAt(activeCell.r, activeCell.c, activeDir);
-  const curIdx = slots.findIndex(s => s.id === (curSlot && curSlot.id));
-  const nextSlot = slots[(curIdx + delta + slots.length) % slots.length];
-  activeDir = nextSlot.dir;
-  const emptyCell = nextSlot.cells.find(([r, c]) => userGrid[r][c] === "");
-  const target = emptyCell || nextSlot.cells[0];
-  activeCell = { r: target[0], c: target[1] };
-  renderAll();
-}
-
-function handleInputKey(key) {
-  if (navigator.vibrate) navigator.vibrate(8);
-
-  if (key === "FLIP") {
-    activeDir = activeDir === "A" ? "D" : "A";
-    renderAll();
-    return;
-  }
-
-  if (key === "BACKSPACE") {
-    if (isSolved) return;
-    const { r, c } = activeCell;
-    if (userGrid[r][c] !== "" && !verifiedGrid[r][c]) {
-      userGrid[r][c] = "";
-    } else {
-      advanceCursor(-1);
-      const nr = activeCell.r;
-      const nc = activeCell.c;
-      if (!verifiedGrid[nr][nc]) userGrid[nr][nc] = "";
-    }
-    renderAll();
-    return;
-  }
-
-  if (/^[A-Z]$/.test(key)) {
-    if (isSolved) return;
-    const { r, c } = activeCell;
-    if (!verifiedGrid[r][c]) {
-      userGrid[r][c] = key;
-    }
-    advanceCursor(1);
-    renderAll();
-    checkVictory();
-  }
-}
-
-function checkVictory() {
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      if (currentMask[r][c] === 1) continue;
-      if (userGrid[r][c] !== solutionGrid[r][c]) return;
-    }
-  }
-  isSolved = true;
-  clearInterval(timerInterval);
-  const timeStr = document.getElementById("timer").textContent;
-  document.getElementById("winStatsText").textContent =
-    `You solved this ${slots.length}-word Mini in ${timeStr}!`;
-  document.getElementById("winModal").classList.add("visible");
-}
-
-document.querySelectorAll(".key").forEach(btn => {
-  btn.addEventListener("click", () => {
-    handleInputKey(btn.dataset.key);
-  });
-});
-
-const nativeInput = document.getElementById("nativeKeyboardInput");
-nativeInput.addEventListener("input", () => {
-  const val = nativeInput.value;
-  if (val.length === 0) {
-    handleInputKey("BACKSPACE");
-  } else {
-    const lastChar = val.slice(-1).toUpperCase();
-    if (/^[A-Z]$/.test(lastChar)) {
-      handleInputKey(lastChar);
-    }
-  }
-  nativeInput.value = " ";
-});
-
-window.addEventListener("keydown", (e) => {
-  if (document.activeElement === nativeInput) return;
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (/^[a-zA-Z]$/.test(e.key)) {
-    e.preventDefault();
-    handleInputKey(e.key.toUpperCase());
-  } else if (e.key === "Backspace" || e.key === "Delete") {
-    e.preventDefault();
-    handleInputKey("BACKSPACE");
-  } else if (e.key === " ") {
-    e.preventDefault();
-    handleInputKey("FLIP");
-  } else if (e.key === "Tab") {
-    e.preventDefault();
-    cycleClue(e.shiftKey ? -1 : 1);
-  }
-});
-
-document.getElementById("prevClueBtn").addEventListener("click", () => cycleClue(-1));
-document.getElementById("nextClueBtn").addEventListener("click", () => cycleClue(1));
-document.getElementById("clueBannerTap").addEventListener("click", () => handleInputKey("FLIP"));
-
-document.getElementById("newBtn").addEventListener("click", generateNewPuzzle);
-document.getElementById("playAgainBtn").addEventListener("click", generateNewPuzzle);
-document.getElementById("closeWinBtn").addEventListener("click", () => {
-  document.getElementById("winModal").classList.remove("visible");
-});
-
-document.getElementById("checkBtn").addEventListener("click", () => {
-  const gridCells = document.querySelectorAll(".grid .cell");
-  let idx = 0;
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const cellEl = gridCells[idx++];
-      if (currentMask[r][c] === 1 || userGrid[r][c] === "") continue;
-      if (userGrid[r][c] === solutionGrid[r][c]) {
-        verifiedGrid[r][c] = true;
-        cellEl.classList.add("verified");
-        cellEl.classList.remove("wrong");
-      } else {
-        cellEl.classList.add("wrong");
-      }
-    }
-  }
-});
-
-document.getElementById("hintBtn").addEventListener("click", () => {
-  const { r, c } = activeCell;
-  if (currentMask[r][c] === 1) return;
-  userGrid[r][c] = solutionGrid[r][c];
-  verifiedGrid[r][c] = true;
-  revealedGrid[r][c] = true;
-  advanceCursor(1);
-  renderAll();
-  checkVictory();
-});
-
-document.getElementById("revealAllBtn").addEventListener("click", () => {
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      if (currentMask[r][c] === 1) continue;
-      if (userGrid[r][c] !== solutionGrid[r][c]) revealedGrid[r][c] = true;
-      userGrid[r][c] = solutionGrid[r][c];
-      verifiedGrid[r][c] = true;
-    }
-  }
-  renderAll();
-  checkVictory();
-});
-
-generateNewPuzzle();
-</script>
-</body>
-</html>
+  const t

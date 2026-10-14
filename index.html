@@ -2,13 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="The Mini" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>The Mini</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Mini v3</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -20,7 +15,6 @@
       --highlight-cell: #ffda00;
       --correct: #2e7d32;
       --wrong: #d32f2f;
-      --key-active: #9ca3af;
       --clue-bar: #dceeff;
     }
 
@@ -32,59 +26,76 @@
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: manipulation;
     }
 
-    html, body {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
+    body {
       background: #f3f4f6;
       color: var(--text);
       display: flex;
       justify-content: center;
+      min-height: 100vh;
     }
 
     .app-shell {
       width: 100%;
-      max-width: 480px;
-      height: 100%;
+      max-width: 460px;
       background: var(--bg);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 6px);
-      box-shadow: 0 0 24px rgba(0,0,0,0.08);
-      position: relative;
+      align-items: center;
+      padding-bottom: 24px;
+    }
+
+    /* Hidden input that triggers the native phone keyboard on tap */
+    #nativeKeyboardInput {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0.01;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: transparent;
+      caret-color: transparent;
+      font-size: 16px; /* Prevents iOS auto-zoom */
+      z-index: -1;
     }
 
     header {
+      width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 8px 12px;
       border-bottom: 1px solid #e5e7eb;
-      flex-shrink: 0;
     }
 
     .title-left {
       display: flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 6px;
     }
 
     h1 {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.25rem;
+      font-family: Georgia, serif;
+      font-size: 1.2rem;
       font-weight: 700;
+    }
+
+    .ver-badge {
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
     }
 
     .timer {
       font-variant-numeric: tabular-nums;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--muted);
     }
@@ -96,7 +107,7 @@
     }
 
     button.tool-btn, select.tool-select {
-      padding: 5px 8px;
+      padding: 5px 7px;
       border-radius: 6px;
       border: 1px solid #d1d5db;
       background: #fff;
@@ -112,19 +123,17 @@
       border-color: var(--text);
     }
 
+    /* Compact Grid so keyboard always fits right below it */
     .board-area {
-      flex: 1;
+      padding: 8px 12px;
       display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 6px 12px;
-      min-height: 0;
+      width: 100%;
     }
 
     .grid {
-      height: 100%;
-      max-height: min(78vw, 320px);
-      aspect-ratio: 1 / 1;
+      width: 245px;
+      height: 245px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       grid-template-rows: repeat(5, 1fr);
@@ -139,7 +148,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(1.25rem, 5vw, 1.85rem);
+      font-size: 1.45rem;
       font-weight: 700;
       text-transform: uppercase;
       cursor: pointer;
@@ -162,7 +171,7 @@
       position: absolute;
       top: 2px;
       left: 3px;
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       font-weight: 600;
       line-height: 1;
       color: var(--text);
@@ -193,15 +202,16 @@
       background: var(--correct);
     }
 
+    /* Active Clue Bar */
     .clue-nav-bar {
+      width: 100%;
       display: grid;
-      grid-template-columns: 42px 1fr 42px;
+      grid-template-columns: 40px 1fr 40px;
       align-items: center;
       background: var(--clue-bar);
       border-top: 1px solid #b8dcff;
       border-bottom: 1px solid #b8dcff;
-      min-height: 48px;
-      flex-shrink: 0;
+      min-height: 46px;
     }
 
     .nav-arrow {
@@ -211,9 +221,6 @@
       font-size: 1.4rem;
       font-weight: 700;
       color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
     }
 
@@ -223,7 +230,6 @@
       align-items: center;
       gap: 8px;
       cursor: pointer;
-      height: 100%;
     }
 
     .clue-badge {
@@ -243,13 +249,14 @@
       color: var(--text);
     }
 
+    /* On-Screen Touch Keyboard directly under the clue bar */
     .keyboard {
-      padding: 6px 4px 8px;
+      width: 100%;
+      padding: 8px 4px;
       background: #e5e7eb;
       display: flex;
       flex-direction: column;
       gap: 5px;
-      flex-shrink: 0;
     }
 
     .kb-row {
@@ -266,7 +273,7 @@
       border-radius: 5px;
       border: none;
       background: #ffffff;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.25);
       font-size: 1.05rem;
       font-weight: 700;
       color: var(--text);
@@ -277,27 +284,35 @@
     }
 
     .key.wide {
-      max-width: 14.5%;
+      max-width: 15%;
       flex: 1.5;
       background: #cbd5e1;
       font-size: 0.8rem;
       font-weight: 800;
     }
 
-    .key:active, .key.pressed {
-      background: var(--key-active);
-      transform: translateY(1px);
+    .key:active {
+      background: #9ca3af;
+    }
+
+    .kb-mode-toggle {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .modal-overlay {
-      position: absolute;
+      position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.5);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 20;
+      z-index: 30;
     }
 
     .modal-overlay.visible {
@@ -307,36 +322,22 @@
     .modal-card {
       background: #fff;
       width: 100%;
-      max-width: 350px;
-      border-radius: 14px;
-      padding: 20px;
+      max-width: 340px;
+      border-radius: 12px;
+      padding: 18px;
       text-align: center;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.22);
-      max-height: 80%;
-      overflow-y: auto;
-    }
-
-    .modal-card h2 {
-      font-size: 1.3rem;
-      margin-bottom: 8px;
-    }
-
-    .modal-card p {
-      color: var(--muted);
-      margin-bottom: 16px;
-      font-size: 0.92rem;
     }
 
     .modal-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
+      margin-top: 14px;
     }
 
     .modal-actions button {
-      padding: 9px 16px;
-      border-radius: 8px;
-      font-size: 0.9rem;
+      padding: 8px 14px;
+      border-radius: 6px;
       font-weight: 700;
       border: 1px solid #d1d5db;
       background: #fff;
@@ -346,50 +347,32 @@
     .modal-actions button.primary {
       background: #121212;
       color: #fff;
-      border-color: #121212;
-    }
-
-    .drawer-lists {
-      text-align: left;
-      margin-bottom: 14px;
-      font-size: 0.85rem;
-    }
-
-    .drawer-lists h4 {
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin: 8px 0 4px;
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 2px;
-    }
-
-    .drawer-item {
-      padding: 5px 4px;
-      border-bottom: 1px solid #f3f4f6;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
 <div class="app-shell">
+  <!-- Hidden input so tapping a cell can also pop up native OS keyboard if desired -->
+  <input id="nativeKeyboardInput" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" />
+
   <header>
     <div class="title-left">
       <h1>The Mini</h1>
+      <span class="ver-badge">v3.0</span>
       <span class="timer" id="timer">0:00</span>
     </div>
     <div class="toolbar">
-      <select id="templateSelect" class="tool-select" aria-label="Shape">
+      <select id="templateSelect" class="tool-select">
         <option value="random">Mix</option>
         <option value="0">Stairs</option>
         <option value="1">Corners</option>
         <option value="2">Cut</option>
         <option value="3">5×5</option>
       </select>
-      <button class="tool-btn" id="cluesBtn" type="button">Clues</button>
       <button class="tool-btn" id="checkBtn" type="button">Check</button>
       <button class="tool-btn" id="hintBtn" type="button">Hint</button>
+      <button class="tool-btn" id="revealAllBtn" type="button">Solve</button>
       <button class="tool-btn primary" id="newBtn" type="button">New</button>
     </div>
   </header>
@@ -402,66 +385,61 @@
     <button class="nav-arrow" id="prevClueBtn" type="button">‹</button>
     <div class="clue-display" id="clueBannerTap">
       <span class="clue-badge" id="bannerNum">1A</span>
-      <span class="clue-text" id="bannerText">Loading puzzle...</span>
+      <span class="clue-text" id="bannerText">Loading...</span>
     </div>
     <button class="nav-arrow" id="nextClueBtn" type="button">›</button>
   </div>
 
+  <!-- On-Screen Touch Keyboard -->
   <div class="keyboard" id="keyboard">
     <div class="kb-row">
-      <button class="key" data-key="Q">Q</button>
-      <button class="key" data-key="W">W</button>
-      <button class="key" data-key="E">E</button>
-      <button class="key" data-key="R">R</button>
-      <button class="key" data-key="T">T</button>
-      <button class="key" data-key="Y">Y</button>
-      <button class="key" data-key="U">U</button>
-      <button class="key" data-key="I">I</button>
-      <button class="key" data-key="O">O</button>
-      <button class="key" data-key="P">P</button>
+      <button class="key" type="button" data-key="Q">Q</button>
+      <button class="key" type="button" data-key="W">W</button>
+      <button class="key" type="button" data-key="E">E</button>
+      <button class="key" type="button" data-key="R">R</button>
+      <button class="key" type="button" data-key="T">T</button>
+      <button class="key" type="button" data-key="Y">Y</button>
+      <button class="key" type="button" data-key="U">U</button>
+      <button class="key" type="button" data-key="I">I</button>
+      <button class="key" type="button" data-key="O">O</button>
+      <button class="key" type="button" data-key="P">P</button>
     </div>
     <div class="kb-row">
-      <button class="key" data-key="A">A</button>
-      <button class="key" data-key="S">S</button>
-      <button class="key" data-key="D">D</button>
-      <button class="key" data-key="F">F</button>
-      <button class="key" data-key="G">G</button>
-      <button class="key" data-key="H">H</button>
-      <button class="key" data-key="J">J</button>
-      <button class="key" data-key="K">K</button>
-      <button class="key" data-key="L">L</button>
+      <button class="key" type="button" data-key="A">A</button>
+      <button class="key" type="button" data-key="S">S</button>
+      <button class="key" type="button" data-key="D">D</button>
+      <button class="key" type="button" data-key="F">F</button>
+      <button class="key" type="button" data-key="G">G</button>
+      <button class="key" type="button" data-key="H">H</button>
+      <button class="key" type="button" data-key="J">J</button>
+      <button class="key" type="button" data-key="K">K</button>
+      <button class="key" type="button" data-key="L">L</button>
     </div>
     <div class="kb-row">
-      <button class="key wide" data-key="FLIP">A/D ⇄</button>
-      <button class="key" data-key="Z">Z</button>
-      <button class="key" data-key="X">X</button>
-      <button class="key" data-key="C">C</button>
-      <button class="key" data-key="V">V</button>
-      <button class="key" data-key="B">B</button>
-      <button class="key" data-key="N">N</button>
-      <button class="key" data-key="M">M</button>
-      <button class="key wide" data-key="BACKSPACE">⌫</button>
+      <button class="key wide" type="button" data-key="FLIP">A/D ⇄</button>
+      <button class="key" type="button" data-key="Z">Z</button>
+      <button class="key" type="button" data-key="X">X</button>
+      <button class="key" type="button" data-key="C">C</button>
+      <button class="key" type="button" data-key="V">V</button>
+      <button class="key" type="button" data-key="B">B</button>
+      <button class="key" type="button" data-key="N">N</button>
+      <button class="key" type="button" data-key="M">M</button>
+      <button class="key wide" type="button" data-key="BACKSPACE">⌫</button>
     </div>
   </div>
+
+  <label class="kb-mode-toggle">
+    <input type="checkbox" id="useNativeKbToggle" />
+    Also pop up phone's native OS keyboard when tapping a square
+  </label>
 
   <div class="modal-overlay" id="winModal">
     <div class="modal-card">
-      <h2>🎉 Puzzle Solved!</h2>
-      <p id="winStatsText">You finished The Mini!</p>
+      <h2>🎉 Solved!</h2>
+      <p id="winStatsText" style="margin-top:6px;color:#555;"></p>
       <div class="modal-actions">
-        <button id="closeWinBtn" type="button">View Board</button>
+        <button id="closeWinBtn" type="button">Close</button>
         <button class="primary" id="playAgainBtn" type="button">Next Puzzle</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="cluesModal">
-    <div class="modal-card">
-      <h2>All Clues</h2>
-      <div class="drawer-lists" id="drawerContent"></div>
-      <div class="modal-actions">
-        <button id="revealAllBtn" type="button">Reveal All</button>
-        <button class="primary" id="closeCluesBtn" type="button">Close</button>
       </div>
     </div>
   </div>
@@ -471,17 +449,13 @@
 const RAW_DICTIONARY = [
   ["ROTOR", "Spinning assembly inside a turbine"],
   ["CRUST", "Artisanal loaf's caramelized exterior"],
-  ["CRUMB", "Interior hole structure of baked bread"],
   ["FLOUR", "Baker's primary dry ingredient"],
   ["YEAST", "Single-celled leavening agent"],
   ["BRINE", "Salty bath for lacto-fermentation"],
   ["SHALE", "Fine-grained sedimentary rock"],
   ["VALVE", "Flow-regulating pipe fitting"],
-  ["GAUGE", "Dial on a pressurized tank"],
   ["LASER", "Coherent optical beam"],
-  ["ALLOY", "Metallic solid solution, like brass or steel"],
   ["LATHE", "Machine shop turning tool"],
-  ["BEVEL", "Angled edge on a machined plate"],
   ["RIVET", "Heavy-duty metal fastener"],
   ["WELDS", "Fuses metal plates with an arc"],
   ["SPARK", "Ignition gap flash"],
@@ -490,7 +464,6 @@ const RAW_DICTIONARY = [
   ["VAPOR", "Gas below its critical temperature"],
   ["STEAM", "Pressurized boiler output"],
   ["SLOPE", "Rise divided by run"],
-  ["DRAFT", "Preliminary CAD drawing"],
   ["SCALE", "Drawing ratio, e.g., 1:10"],
   ["LIMIT", "Calculus boundary value"],
   ["PRIME", "Number divisible only by 1 and itself"],
@@ -514,27 +487,19 @@ const RAW_DICTIONARY = [
   ["POWER", "Work performed per unit time"],
   ["JOULE", "SI unit of energy"],
   ["TESLA", "SI unit of magnetic flux density"],
-  ["FARAD", "SI unit of electrical capacitance"],
   ["WATTS", "Units on a lightbulb package"],
   ["VOLTS", "Electromotive force units"],
-  ["DIODE", "One-way semiconductor gate"],
   ["ANODE", "Electrode where oxidation occurs"],
   ["RELAY", "Electrically operated switch"],
-  ["LOGIC", "Boolean circuit fundamentals"],
   ["ARRAY", "Indexed data structure"],
   ["STACK", "Last-in, first-out memory structure"],
-  ["CACHE", "High-speed processor memory buffer"],
-  ["PIXEL", "Smallest addressable screen element"],
-  ["TOKEN", "Lexical parser unit"],
   ["NODES", "Intersection points in a finite element mesh"],
   ["TRUSS", "Triangulated structural framework"],
   ["STRUT", "Structural member resisting compression"],
   ["BEAMS", "Horizontal members resisting bending"],
   ["LOADS", "External forces applied to a structure"],
   ["SHEAR", "Sliding stress parallel to a cross-section"],
-  ["YIELD", "Onset of permanent plastic deformation"],
   ["CREEP", "Slow deformation under high-temperature stress"],
-  ["CRACK", "Fracture mechanics flaw"],
   ["GRAIN", "Crystalline region in a metal"],
   ["STEEL", "Iron-carbon structural alloy"],
   ["BRASS", "Copper-zinc acoustic and valve alloy"],
@@ -562,13 +527,9 @@ const RAW_DICTIONARY = [
   ["OCEAN", "71% of Earth's surface"],
   ["TIDES", "Gravitational sea-level oscillations"],
   ["WAVES", "Oscillations that transfer energy"],
-  ["WINDS", "Pressure-gradient atmospheric flows"],
   ["STORM", "Low-pressure meteorological disturbance"],
-  ["CLOUD", "Visible aerosol of water droplets"],
   ["FROST", "Sub-freezing vapor deposition"],
-  ["GLAZE", "Smooth, glossy coating"],
   ["SPICE", "Aromatic culinary seasoning"],
-  ["HERBS", "Leafy green flavorings like basil or thyme"],
   ["SAUCE", "Liquid culinary condiment"],
   ["ROAST", "Cook with dry oven heat"],
   ["BAKES", "Cooks in an enclosed oven"],
@@ -580,7 +541,6 @@ const RAW_DICTIONARY = [
   ["PASTA", "Extruded durum wheat semolina dough"],
   ["OLIVE", "Mediterranean oil fruit"],
   ["LEMON", "Tart citric acid source"],
-  ["BERRY", "Small pulpy fruit"],
   ["MELON", "Cantaloupe or honeydew"],
   ["PEACH", "Fuzzy stone fruit"],
   ["GRAPE", "Winemaker's raw material"],
@@ -603,7 +563,6 @@ const RAW_DICTIONARY = [
   ["CABIN", "Woodland getaway retreat"],
   ["TRAIL", "Backcountry footpath"],
   ["RIDGE", "Elevated mountain crest"],
-  ["CLIFF", "Sheer rock face"],
   ["SHORE", "Where land meets sea"],
   ["BEACH", "Sandy coastal stretch"],
   ["DUNES", "Wind-sculpted sand hills"],
@@ -613,7 +572,6 @@ const RAW_DICTIONARY = [
   ["SEEDS", "Random number generator initializers"],
   ["STEMS", "Wineglass supports"],
   ["THORN", "Rosebush defense"],
-  ["CHESS", "64-square strategy game"],
   ["BOARD", "Tabletop gaming surface"],
   ["CARDS", "Deck of 52"],
   ["POKER", "Texas Hold'em game"],
@@ -625,11 +583,9 @@ const RAW_DICTIONARY = [
   ["VANES", "Flow-directing diffuser foils"],
   ["SEALS", "Leakage-preventing shaft barriers"],
   ["PORTS", "Fluid intake or exhaust openings"],
-  ["DUCTS", "Sheet-metal air passages"],
   ["PIPES", "Tubular fluid conduits"],
   ["TUBES", "Hollow cylindrical conduits"],
   ["TANKS", "Pressurized storage vessels"],
-  ["PUMPS", "Machines that add head to liquids"],
   ["MOTOR", "Electrical-to-mechanical prime mover"],
   ["DRIVE", "Power transmission system"],
   ["ALIBI", "Courtroom excuse"],
@@ -684,10 +640,6 @@ const RAW_DICTIONARY = [
   ["ARISE", "Come into view"],
   ["RAISE", "Lift to a higher elevation"],
   ["ALONE", "Solo"],
-  ["AVOID", "Steer clear of"],
-  ["AWAIT", "Wait on an asynchronous promise"],
-  ["AWAKE", "Not sleeping"],
-  ["AWARE", "Cognizant"],
   ["BASTE", "Moisten roasting meat"],
   ["BEAST", "Formidable machine"],
   ["BEATS", "Acoustic interference pulsations"],
@@ -698,21 +650,13 @@ const RAW_DICTIONARY = [
   ["CLEAR", "Reset the display"],
   ["CLEAT", "Cycling shoe pedal clip"],
   ["DEALT", "Distributed playing cards"],
-  ["EARLY", "Ahead of schedule"],
   ["ELATE", "Fill with joy"],
-  ["EMAIL", "Inbox message"],
   ["ENTER", "Return key label"],
-  ["EQUAL", "Balanced on both sides"],
-  ["EVENT", "State-machine trigger"],
-  ["EXTRA", "Additional margin"],
-  ["FALSE", "Boolean 0"],
-  ["FEAST", "Celebratory banquet"],
   ["HEART", "Cardiovascular pump"],
   ["HEATS", "Qualifying track races"],
   ["HATES", "Detests"],
   ["HASTE", "Speed that makes waste"],
   ["IDEAL", "Carnot cycle benchmark"],
-  ["IMAGE", "Optical lens projection"],
   ["INERT", "Chemically non-reactive, like argon"],
   ["INTER", "Prefix meaning between"],
   ["IRATE", "Furious"],
@@ -724,13 +668,10 @@ const RAW_DICTIONARY = [
   ["STALE", "Past peak freshness"],
   ["STEAL", "Take covertly"],
   ["TEALS", "Blue-green duck shades"],
-  ["LEAVE", "Depart"],
-  ["MEDIA", "Transmission channels"],
   ["METAL", "Ductile conductive solid"],
   ["NOISE", "Unwanted high-frequency static"],
   ["OPERA", "Puccini stage work"],
   ["ORDER", "Highest derivative in a diff-eq"],
-  ["OTHER", "Alternative option"],
   ["OUTER", "External boundary"],
   ["ROUTE", "Navigation path"],
   ["PANEL", "Solar array module"],
@@ -759,25 +700,9 @@ const RAW_DICTIONARY = [
   ["UNDER", "Below the threshold"],
   ["UNITE", "Bring together"],
   ["UNTIE", "Loosen a knot"],
-  ["UPPER", "Higher bound"],
-  ["URBAN", "City-centered"],
-  ["USAGE", "Consumption rate"],
-  ["USUAL", "Standard practice"],
-  ["UTTER", "Complete and total"],
-  ["VALID", "Meeting all design constraints"],
-  ["VALUE", "Scalar magnitude"],
-  ["VIDEO", "Moving picture stream"],
-  ["VITAL", "Critical to operation"],
-  ["VOCAL", "Spoken aloud"],
-  ["VOICE", "Acoustic speech signal"],
-  ["VOTER", "Ballot caster"],
   ["WASTE", "Rejected scrap heat"],
-  ["WATCH", "GPS running wearable"],
-  ["WEARY", "Fatigued"],
-  ["WEAVE", "Interlace carbon fiber tows"],
   ["WRITE", "Commit data to disk"],
   ["WRIST", "Watch placement joint"],
-  ["YEARN", "Long wistfully"],
 
   ["SPAR", "Main wing carry-through beam"],
   ["STAR", "Fusion-powered celestial body"],
@@ -801,20 +726,16 @@ const RAW_DICTIONARY = [
   ["SOAR", "Ride thermal updrafts"],
   ["SOUR", "Lacto-fermented flavor profile"],
   ["POUR", "Cast molten metal into a mold"],
-  ["FOUR", "Two squared"],
   ["FOIL", "Aerodynamic wing section"],
   ["COIL", "Helical inductor winding"],
   ["SOIL", "Geotechnical foundation medium"],
   ["BOIL", "Nucleate phase transition"],
   ["BOLT", "Threaded hex-head fastener"],
   ["VOLT", "Joule per coulomb"],
-  ["JOLT", "Rate of change of acceleration"],
   ["MALT", "Germinated grain for brewing"],
   ["SALT", "Essential sourdough mineral"],
   ["HALT", "Stop execution"],
   ["HALO", "Circular optical ring"],
-  ["HALF", "Fifty percent"],
-  ["CALF", "Lower leg running muscle"],
   ["CALL", "Invoke a subroutine"],
   ["WALL", "Boundary layer surface"],
   ["WELL", "Potential energy minimum"],
@@ -833,12 +754,9 @@ const RAW_DICTIONARY = [
   ["FORM", "Sheet-metal stamping die"],
   ["FOAM", "Cellular lightweight core"],
   ["ROAM", "Wander freely"],
-  ["FLOW", "Fluid motion"],
-  ["SLOW", "Creeping Reynolds regime"],
   ["SLOT", "Keyway groove in a shaft"],
   ["PLOT", "Graph y versus x"],
   ["PLAN", "Top-down orthographic view"],
-  ["PLAY", "Backlash clearance between gears"],
   ["CLAY", "Plastic ceramic earth"],
   ["CLAD", "Bonded with a metal layer"],
   ["GLAD", "Pleased"],
@@ -896,7 +814,6 @@ const RAW_DICTIONARY = [
   ["MESH", "Finite element grid"],
   ["MATH", "Language of engineering"],
   ["PATH", "Line integral trajectory"],
-  ["BATH", "Quenching oil tank"],
   ["BARK", "Tree's outer layer"],
   ["MARK", "Calibration scribed line"],
   ["MARS", "Fourth planet from the sun"],
@@ -911,7 +828,6 @@ const RAW_DICTIONARY = [
   ["SOLE", "Running shoe bottom assembly"],
   ["SOLO", "Unassisted flight"],
   ["SODA", "Fizzy carbonated drink"],
-  ["SOFA", "Living room couch"],
   ["SOFT", "Low-durometer elastomer rating"],
   ["LOFT", "3D CAD blend between sections"],
   ["LIFT", "Force perpendicular to freestream"],
@@ -954,27 +870,20 @@ const RAW_DICTIONARY = [
   ["AREA", "Integral under a curve"],
   ["ARCS", "Circular geometry segments"],
   ["ARCH", "Compression masonry span"],
-  ["INCH", "25.4 millimeters"],
   ["IONS", "Charged atomic species"],
   ["IRON", "Ferrous base metal"],
   ["ICON", "Desktop symbol"],
   ["ECHO", "Reflected acoustic wave"],
   ["ETCH", "Reveal metal grain with acid"],
   ["EACH", "Per unit item"],
-  ["EASY", "Recovery run pace"],
   ["EAST", "Sunrise azimuth"],
   ["TEST", "Experimental validation run"],
-  ["NEXT", "Subsequent iteration"],
   ["NEST", "Pack parts on a laser sheet"],
   ["WEST", "Sunset direction"],
   ["BEST", "Global optimum"],
   ["REST", "Static equilibrium state"],
   ["RUST", "Hydrated iron oxide"],
   ["RUSH", "Sudden flow surge"],
-  ["BUSH", "Sleeve bearing liner"],
-  ["PUSH", "Apply compressive force"],
-  ["PUMP", "Centrifugal fluid mover"],
-  ["DUMP", "Vent pressure rapidly"],
   ["DAMP", "Dissipate vibrational energy"],
   ["LAMP", "Illumination source"],
   ["RAMP", "Linearly increasing input"],
@@ -989,16 +898,13 @@ const RAW_DICTIONARY = [
   ["CAM", "Eccentric lobe driving a follower"],
   ["COG", "Gear tooth"],
   ["DIE", "Extrusion or threading tool"],
-  ["JIG", "Workpiece-guiding device"],
   ["PIN", "Clevis shear fastener"],
   ["ROD", "Piston connecting link"],
   ["NUT", "Internally threaded fastener"],
   ["KEY", "Shaft-to-hub torque insert"],
-  ["HUB", "Central boss of an impeller"],
   ["RIM", "Outer wheel perimeter"],
   ["RIB", "Thin stiffening casting web"],
   ["FIN", "Heat sink blade"],
-  ["JET", "High-velocity nozzle efflux"],
   ["GAS", "Compressible working fluid"],
   ["OIL", "Bearing lubricant"],
   ["AIR", "78% nitrogen mixture"],
@@ -1013,11 +919,9 @@ const RAW_DICTIONARY = [
   ["COS", "Adjacent over hypotenuse"],
   ["TAN", "Slope of the angle"],
   ["LOG", "Inverse of exponentiation"],
-  ["MAX", "Zero-derivative peak"],
   ["MIN", "Zero-derivative trough"],
   ["BIT", "Binary 0 or 1"],
   ["RAM", "Volatile system memory"],
-  ["CPU", "Microprocessor core"],
   ["CAD", "SolidWorks domain"],
   ["FEA", "Mesh-based structural simulation"],
   ["RYE", "Tangy bread grain"],
@@ -1037,19 +941,15 @@ const RAW_DICTIONARY = [
   ["CAT", "Orange tabby pet"],
   ["DOG", "Loyal canine"],
   ["OWL", "Nocturnal raptor"],
-  ["JAY", "Crested blue bird"],
   ["SEA", "Coastal salt water"],
   ["BAY", "San Luis Obispo inlet"],
-  ["SKY", "Atmosphere overhead"],
   ["SUN", "G-type main-sequence star"],
   ["ERA", "Geologic time division"],
   ["AGE", "Radiometric dating result"],
   ["ACT", "Take action"],
   ["AIM", "Point toward a target"],
   ["ART", "Craftsmanship"],
-  ["ASK", "Query"],
   ["AID", "Assistance"],
-  ["ADD", "Sum together"],
   ["ARM", "Moment lever length"],
   ["END", "Boundary condition point"],
   ["EAR", "Lifted crust ridge on a scored loaf"],
@@ -1060,20 +960,14 @@ const RAW_DICTIONARY = [
   ["HOT", "High-enthalpy state"],
   ["LOW", "Suction pressure side"],
   ["MAP", "Compressor performance chart"],
-  ["MIX", "Combine reactants"],
   ["NEW", "Freshly initialized"],
   ["NOW", "At t = 0"],
-  ["ODD", "Not divisible by two"],
-  ["OFF", "Open-circuit state"],
-  ["OLD", "Legacy design"],
   ["ONE", "Multiplicative identity"],
   ["OUT", "Discharge port direction"],
-  ["OWN", "Possess"],
   ["PAD", "Tilting-___ thrust bearing"],
   ["PEG", "Alignment dowel"],
   ["PEN", "Plotter stylus"],
   ["PIT", "Corrosion surface cavity"],
-  ["PLY", "Composite laminate layer"],
   ["PRO", "Seasoned specialist"],
   ["RAW", "Unprocessed sensor data"],
   ["RED", "Veloster N paint shade"],
@@ -1081,8 +975,6 @@ const RAW_DICTIONARY = [
   ["SAW", "Cutoff blade"],
   ["SET", "Harden or cure"],
   ["SIT", "Rest in place"],
-  ["SIX", "Three factorial"],
-  ["SKI", "Alpine snow runner"],
   ["SUB", "Undersea vessel"],
   ["TAB", "Sheet-metal alignment ear"],
   ["TAG", "Equipment ID plate"],
@@ -1102,13 +994,11 @@ const RAW_DICTIONARY = [
   ["VAT", "Fermentation tun"],
   ["VET", "Review a design"],
   ["VIA", "PCB plated through-hole"],
-  ["WAX", "Lost-___ casting"],
   ["WAY", "Precision lathe guide rail"],
   ["WEB", "I-beam vertical plate"],
   ["WET", "Saturated"],
   ["WIN", "First-place finish"],
-  ["WON", "Finished first"],
-  ["YAW", "Vertical-axis rotation"]
+  ["WON", "Finished first"]
 ];
 
 const WORD_MAP = new Map();
@@ -1341,7 +1231,6 @@ function generateNewPuzzle() {
   isSolved = false;
 
   document.getElementById("winModal").classList.remove("visible");
-  document.getElementById("cluesModal").classList.remove("visible");
 
   const firstSlot = slots.find(s => s.dir === "A") || slots[0];
   activeCell = { r: firstSlot.cells[0][0], c: firstSlot.cells[0][1] };
@@ -1415,14 +1304,20 @@ function renderAll() {
       letterSpan.textContent = userGrid[r][c];
       cellEl.appendChild(letterSpan);
 
-      cellEl.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
+      cellEl.addEventListener("click", () => {
         if (activeCell.r === r && activeCell.c === c) {
           activeDir = activeDir === "A" ? "D" : "A";
         } else {
           activeCell = { r, c };
         }
         renderAll();
+
+        // If user checked "pop up phone's native OS keyboard", focus the hidden input
+        if (document.getElementById("useNativeKbToggle").checked) {
+          const inp = document.getElementById("nativeKeyboardInput");
+          inp.value = " ";
+          inp.focus();
+        }
       });
 
       gridEl.appendChild(cellEl);
@@ -1516,17 +1411,31 @@ function checkVictory() {
   document.getElementById("winModal").classList.add("visible");
 }
 
+// 1. On-Screen Touch Keyboard Buttons (standard click for 100% compatibility)
 document.querySelectorAll(".key").forEach(btn => {
-  btn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    btn.classList.add("pressed");
+  btn.addEventListener("click", () => {
     handleInputKey(btn.dataset.key);
   });
-  btn.addEventListener("pointerup", () => btn.classList.remove("pressed"));
-  btn.addEventListener("pointercancel", () => btn.classList.remove("pressed"));
 });
 
+// 2. Native OS Mobile Keyboard Listener (via hidden input)
+const nativeInput = document.getElementById("nativeKeyboardInput");
+nativeInput.addEventListener("input", () => {
+  const val = nativeInput.value;
+  if (val.length === 0) {
+    handleInputKey("BACKSPACE");
+  } else {
+    const lastChar = val.slice(-1).toUpperCase();
+    if (/^[A-Z]$/.test(lastChar)) {
+      handleInputKey(lastChar);
+    }
+  }
+  nativeInput.value = " ";
+});
+
+// 3. Physical Desktop Keyboard Listener
 window.addEventListener("keydown", (e) => {
+  if (document.activeElement === nativeInput) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (/^[a-zA-Z]$/.test(e.key)) {
     e.preventDefault();
@@ -1583,40 +1492,6 @@ document.getElementById("hintBtn").addEventListener("click", () => {
   checkVictory();
 });
 
-document.getElementById("cluesBtn").addEventListener("click", () => {
-  const container = document.getElementById("drawerContent");
-  const across = slots.filter(s => s.dir === "A");
-  const down = slots.filter(s => s.dir === "D");
-
-  let html = "<h4>Across</h4>";
-  for (const s of across) {
-    html += `<div class="drawer-item" data-id="${s.id}"><b>${s.num}.</b> ${s.clue}</div>`;
-  }
-  html += "<h4>Down</h4>";
-  for (const s of down) {
-    html += `<div class="drawer-item" data-id="${s.id}"><b>${s.num}.</b> ${s.clue}</div>`;
-  }
-  container.innerHTML = html;
-
-  container.querySelectorAll(".drawer-item").forEach(el => {
-    el.addEventListener("click", () => {
-      const slot = slots.find(s => s.id === el.dataset.id);
-      if (slot) {
-        activeDir = slot.dir;
-        activeCell = { r: slot.cells[0][0], c: slot.cells[0][1] };
-        document.getElementById("cluesModal").classList.remove("visible");
-        renderAll();
-      }
-    });
-  });
-
-  document.getElementById("cluesModal").classList.add("visible");
-});
-
-document.getElementById("closeCluesBtn").addEventListener("click", () => {
-  document.getElementById("cluesModal").classList.remove("visible");
-});
-
 document.getElementById("revealAllBtn").addEventListener("click", () => {
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) {
@@ -1626,7 +1501,6 @@ document.getElementById("revealAllBtn").addEventListener("click", () => {
       verifiedGrid[r][c] = true;
     }
   }
-  document.getElementById("cluesModal").classList.remove("visible");
   renderAll();
   checkVictory();
 });
